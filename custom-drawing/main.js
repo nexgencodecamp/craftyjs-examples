@@ -5,9 +5,6 @@ var _screenHeight = 600;
 /* Initialise Game Engine */
 Crafty.init(_screenWidth, _screenHeight, document.getElementById('gamecanvas'));
 
-/* Initialise Game Engine */
-Crafty.init(_screenWidth, _screenHeight, document.getElementById('gamecanvas'));
-
 /* Load Assets */
 Crafty.background('rgb(0,0,0)');
 
