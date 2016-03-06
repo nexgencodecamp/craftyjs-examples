@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TETRIS</title>
+</head>
+<body>
+  <div id="game" style="border: 1px solid #000"></div>
+
+  <script src="crafty.js"></script>
+  <script>
+
+    Crafty.init(500, 350, document.getElementById('game'));
+    var _currentBlock;
+    var _board = new Board(10);
+    var __gamePaused = false;
+    var __counter = 0;
+    var __score = Crafty.e("2D, Canvas, Text")
+      .attr({ x: 310, y: 10 })
+      .text("BLOCKS: ").textColor('#000').textFont({ size: '18px', weight: 'bold', family: 'Arial' });
+
+    // Kick off!
+    _currentBlock = spawnBlock();
+
+    Crafty.bind("EnterFrame", function() {
+      if(__gamePaused)
+        return;
+
+      // Each timeinterval...
+      if (Crafty.frame() % 2 === 0) {
+        // Check if the block is still in play
+        var isPosAvailable = _board.getPosition(((_currentBlock.getPos().row + 1) * _currentBlock.numCols)  + _currentBlock.getPos().col);
+        if ( _currentBlock.sprite.y < 340 && isPosAvailable === 0 ) {
+          // Determine if we can move the block down by 50px
+          if(_board.getPosition(((_currentBlock.getPos().row + 1) * _currentBlock.numCols) + _currentBlock.getPos().col) === 0){
+            _currentBlock.setPos(_currentBlock.getPos().row + 1, _currentBlock.getPos().col);
+          }
+          else{
+            _currentBlock.setCurrentBlock(false);
+            _currentBlock = spawnBlock();
+          }
+        } else {
+          // The block has found a resting place so update the Board
+          //_board.setPosition(_currentBlock.getPos());
+          _board.setPosition(_currentBlock);
+
+          // Check if we need to remove any row
+          var completeRow = _board.findFirstCompleteRow();
+          if(completeRow){
+            __gamePaused = true;
+            _board.destroyRow(completeRow);
+            /* Move the other blocks down by one */
+            _board.shift();
+            __gamePaused = false;
+          }
+
+          // spawn a new one!
+          _currentBlock.setCurrentBlock(false);
+          _currentBlock = spawnBlock();
+        }
+      }
+    });
+
+    function spawnBlock() {
+      __counter++;
+      __score.text("BLOCKS: " + pad(__counter, 6));
+
+      return new Block();
+    }
+
+    function displayGameNotStartedYet(){
+      _gameNotStartedText = Crafty.e("2D, Canvas, Text")
+        .attr({ x: 150, y: 250 })
+        .text("TO START GAME, PRESS 'P'").textColor('#FFFF00').textFont({ size: '36px', weight: 'bold', family: 'Courier New' });
+    }
+
+    function pad(num, size) {
+        var s = num+"";
+        while (s.length < size) s = "0" + s;
+        return s;
+    }
+
+    function Block(size) {
+      var that = this;
+      var _width = size && size.width ? size.width : 10 ;
+      var _height = size && size.height ? size.height : 10 ;
+      var _sprite;
+      var _isCurrentBlock;
+      var _xPosArr = [];
+      for (var i = 0; i < 500/_width; i++) {
+        _xPosArr.push(i * _width);
+      }
+
+      var _colours = ['#FF0000','#FF00FF','#FFFF00','#00FFFF','#0000FF','#C0C0C0','#80FF00'];
+      var _pos = {
+        row: 0,
+        col: 0
+      };
+      var _prevPos;
+
+      var _init = function() {
+        _isCurrentBlock = true;
+        _pos.row = 0;
+        _pos.col = _xPosArr[Math.floor(Math.random() * _xPosArr.length)] / _width;
+
+        _sprite = Crafty.e('2D, DOM, Color, Solid, Mouse')
+          .attr({
+            x: _pos.col * _width,
+            y: _pos.row * _height,
+            w: _width,
+            h: _height
+          })
+          .color(_colours[Math.floor(Math.random() * 7)])
+          .bind("KeyDown",
+            function(e) {
+              if (e.key == Crafty.keys.RIGHT_ARROW && this.y < 340 && this.isCB) {
+                /* Do we need to clear previous pos first ?? */
+                this.x += _width;
+                _pos.col++;
+              }
+              if (e.key == Crafty.keys.LEFT_ARROW && this.y < 340 && this.isCB) {
+                this.x -= _width;
+                _pos.col--;
+              }
+            }
+          )
+          .bind("Click",
+            function(e) {
+              console.info("row:"+_pos.row+", col:"+_pos.col);
+            }
+          );
+
+          _sprite.isCB = _isCurrentBlock;
+      };
+
+      var _getPos = function() {
+        return _pos;
+      };
+
+      var _setPos = function(row, col) {
+        _pos.row = row;
+        _sprite.y = row * _width;
+        _pos.col = col;
+        _sprite.x = col * _height;
+      };
+
+      var _setPrevPos = function(pos) {
+        _prevPos = {
+          x: pos.row,
+          y: pos.col
+        };
+      };
+
+      var _setCurrentBlock = function(isCurrent){
+        _isCurrentBlock = isCurrent;
+        _sprite.isCB = isCurrent;
+      };
+
+      var _getIsCurrentBlock = function(){
+        return _isCurrentBlock;
+      }
+
+      _init();
+
+      return {
+        self: that,
+        sprite: _sprite,
+        pos: _pos,
+        setPrevPos: _setPrevPos,
+        getPos: _getPos,
+        setPos: _setPos,
+        numCols: _xPosArr.length,
+        setCurrentBlock: _setCurrentBlock,
+        isCurrentBlock: _getIsCurrentBlock
+      };
+    }
+
+    function Board(blockSize) {
+      var _blockSize = blockSize;
+      var _numPositions = (500/_blockSize) * (350/_blockSize);
+      var _positions = new Array(_numPositions).fill(0);
+
+      var _getPosition = function(pos){
+        return _positions[pos];
+      };
+
+      var _setPosition = function(block) {
+        var pos = block.getPos();
+        //_positions[(pos.row * (500/_blockSize)) + pos.col] = 1;
+        _positions[(pos.row * (500/_blockSize)) + pos.col] = block;
+      };
+
+      var _resetPosition = function(pos) {
+        _positions[(pos.row * (500/_blockSize)) + pos.col] = 0;
+      };
+
+      var _findFirstCompleteRow = function(){
+        var result;
+        for(var j=0; j < (350/_blockSize); j++){
+          var rowResult = "";
+          for(var i=0; i < (500/_blockSize); i++){
+            /* If there are any zeroes in the line, break out and go to next one */
+            if( _positions[(j * (500/_blockSize)) + i] === 0 ){
+              break;
+            }
+            else{
+              rowResult += "*";
+            }
+            if( rowResult.length === (500/_blockSize) ){
+              //console.log("Row: "+j+" COMPLETE !!!");
+              return {row: j};
+            }
+            else{
+              //console.log("Row: "+j+", "+rowResult);
+            }
+          }
+          rowResult = ""; /* reset */
+        }
+        return result;
+      };
+
+      var _destroyRow = function(obj){
+        var row = obj.row;
+        var startIdx = row * (500/_blockSize);
+        var endIdx = startIdx + (500/_blockSize);
+
+        for(var i=startIdx; i < endIdx; i++){
+          _positions[i].sprite.destroy();
+          /* Reset the */
+          _positions[i] = 0;
+        }
+      };
+
+      /**
+       * Move all the blocks down by 1
+       * @return n/a
+       */
+      var _shift = function(){
+        for (var i = _positions.length - 1; i >= 0; i--) {
+          var block = _positions[i];
+          if(typeof(block) === "object"){
+            /* Update the actual position */
+            block.setPos(block.getPos().row+1, block.getPos().col);
+            /* Update the board position */
+            _positions[i + (500/_blockSize)] = block;
+            _positions[i] = 0;
+          }
+        }
+      };
+
+      /* Board interface */
+      return {
+        positions: _positions,
+        getPosition: _getPosition,
+        setPosition: _setPosition,
+        resetPosition: _resetPosition,
+        findFirstCompleteRow: _findFirstCompleteRow,
+        destroyRow: _destroyRow,
+        shift: _shift
+      };
+    }
+
+    /* Global KEY EVENTS */
+    Crafty.bind('KeyDown', function(event) {
+        if(event.keyCode === Crafty.keys.P){
+          __gamePaused = !__gamePaused;
+          console.log(" !!! GAME PAUSED !!!");
+        }
+    });
+
+  </script>
+</body>
+</html>
