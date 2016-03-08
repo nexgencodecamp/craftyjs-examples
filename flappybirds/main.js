@@ -1,29 +1,32 @@
+/**
+ * Concepts to teach
+ *     Recursion
+ *     for..loops
+ *     components
+ *     parameters
+ */
 Crafty.init(800, 600, document.getElementById('gamecanvas'));
 
 Crafty.background( '#000000 url(img/background.png) no-repeat center center');
 
-for(var i=0; i<3; i++){
-    createGroundLayer(336 * i);
-}
+/* Create the scrolling ground */
+Crafty.e("SideScrollPlatform")
+    .setOptions({
+        n: 3, x: 336, y: 488, z: 2, w: 336, h: 112,
+        img: "img/ground.png",
+        createNewComponentOffset: -100,
+        speed: -60
+    })
+    .createComponents();
 
-function createGroundLayer(offset){
-    var ground = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: offset, y: 488, z: 2, w: 336, h: 112})
-        .image("img/ground.png", "repeat-x")
-        .bind("EnterFrame", function(){
-            if(Math.floor(this.x) === -100){
-                createGroundLayer(this.x + (336*3));
-            }
-            if(Math.floor(this.x) === -337){
-                this.destroy();
-            }
-        })
-        .velocity().x = -50;
-}
-
-
-
-
-
+/* Create the scrolling sky */
+Crafty.e("SideScrollPlatform")
+    .setOptions({
+        n: 3, x: 276, y: 379, z: 2, w: 276, h: 109,
+        img: "img/sky.png",
+        createNewComponentOffset: -10,
+        speed: -20
+    })
+    .createComponents();
 
 
