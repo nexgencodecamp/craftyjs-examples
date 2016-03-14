@@ -51,6 +51,7 @@ Crafty.c("SideScrollPlatform", {
      * @return {Object}  return 'this' for chaining purposes
      */
     createComponents: function(){
+        console.log("Called createComponents...");
         for(var i = 0; i < this.options.n; i++){
             this.__createGroundLayer(this.options.w * i);
         }
@@ -66,16 +67,16 @@ Crafty.c("SideScrollPlatform", {
      */
     __createGroundLayer: function(offset){
         var that=this;
-        var ground = Crafty.e("2D, DOM, Image, Motion")
+        Crafty.e("2D, DOM, Image, Motion")
             .attr({ x: offset, y: that.options.y, z: that.options.z, w: that.options.w, h: that.options.h })
             .image(that.options.img, 'repeat-x')
             .bind("EnterFrame", function(){
                 if(Math.floor(this.x) === that.options.createNewComponentOffset){
-                    Crafty.log("calling __createGroundLayer()...");
+                    //Crafty.log("calling __createGroundLayer()...");
                     that.__createGroundLayer(this.x + (that.options.w * that.options.n));
                 }
-                if(Math.floor(this.x) === -that.options.w - 1){
-                    Crafty.log("Destroying entity...");
+                if(Math.floor(this.x) <= -that.options.w - 1){
+                    //Crafty.log("Destroying entity...");
                     this.destroy();
                 }
             })
