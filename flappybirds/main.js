@@ -5,6 +5,10 @@
  *     components
  *     parameters
  */
+
+/* GLOBAL STATE VARIABLES START WITH A __ */
+var __gamePaused = false;
+
 var groundLayers = [];
 var skyLayers = [];
 var ceilingLayers = [];
@@ -13,6 +17,7 @@ var currentSkyLayer = 0;
 var currentCeilingLayer = 0;
 
 var birdSpriteImages = {"sprites": {"img/bird.png": {tile: 34, tileh: 24, map: { bird_start: [0, 0], bird_end: [0, 3]}}}};
+Crafty.load(birdSpriteImages);
 
 Crafty.init(800, 600, document.getElementById('gamecanvas'));
 
@@ -25,6 +30,9 @@ createSkyLayer(0);
 createSkyLayer(1104);
 createCeilingLayer(0);
 createCeilingLayer(928);
+
+/* Add player */
+spawnBird();
 
 /* Kick it off! */
 startBackground();
@@ -43,9 +51,24 @@ function startBackground(){
     }
 }
 
+function stopBackground(){
+    for(var i=0; i < groundLayers.length; i++){
+        groundLayers[i].velocity().x = 0;
+    }
+    for(var j=0; j < skyLayers.length; j++){
+        skyLayers[j].velocity().x = 0;
+    }
+    for(var k=0; k < ceilingLayers.length; k++){
+        ceilingLayers[k].velocity().x = 0;
+    }
+}
+
 function checkBackground(){
+    if(__gamePaused){
+        return;
+    }
+
     if(groundLayers[currentGroundLayer].x < -1008){
-        console.log("Move Layer...");
         /* Move the layer */
         groundLayers[currentGroundLayer].x = groundLayers[currentGroundLayer == 0 ? 1 : 0].x + 1008;
         /* Change the current layer */
@@ -62,40 +85,57 @@ function checkBackground(){
 }
 
 function createGroundLayer(offset){
-    var ground = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: offset, y: 488, z: 2, w: 1008, h: 112})
+    var ground = Crafty.e("Ground, 2D, DOM, Image, Motion")
+        .attr({x: offset, y: 488, z: 0, w: 1008, h: 112})
         .image("img/ground.png", "repeat-x");
     groundLayers.push(ground);
 }
 
 function createSkyLayer(offset){
     var sky = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: offset, y: 379, z: 2, w: 1104, h: 109})
+        .attr({x: offset, y: 379, z: 0, w: 1104, h: 109})
         .image("img/sky.png", "repeat-x");
     skyLayers.push(sky);
 }
 
 function createCeilingLayer(offset){
     var ceiling = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: offset, y: 84, z: 2, w: 928, h: 16})
+        .attr({x: offset, y: 84, z: 0, w: 928, h: 16})
         .image("img/ceiling.png", "repeat-x");
     ceilingLayers.push(ceiling);
 }
 
 function spawnBird() {
-    var bird = Crafty.e('2D, Canvas, bird_start, SpriteAnimation, Multiway, Collision, Solid')
-      .attr({x: 100, y: 300 })
+    var currentYValue = 0;
+    var bird = Crafty.e('2D, DOM, bird_start, AngularMotion, SpriteAnimation, Jumper, Gravity, GroundAttacher, Collision, Solid')
+      .attr({x: 100, y: 300, z: 10 })
       .reel("fly", 500, [[0, 0], [0, 1], [0, 2], [0, 3]])
-      .animate("thrust", -1)
-      .multiway(3, {SPACE: -90 })
-      .bind("KeyDown",
-          function(e) {
-              if (e.key == Crafty.keys["SPACE"]) {}
-          }
-      );
+      .animate("fly", -1)
+      .jumper(300, ['SPACE'])
+      .bind("CheckJumping", function(ground){
+        /* We do this because it would be false as the bird is 'jumping' in mid-air */
+        bird.canJump = true;
+        bird.vrotation = 0;
+      })
+      .bind("NewDirection", function(o){
+
+      })
+      .bind("Moved", function(o){
+        if(o.oldValue > 445){
+            bird.rotation = 0;
+            bird.vrotation = 0;
+            return;
+        }
+        bird.vrotation = 40;
+      })
+      .gravity("Ground")
+      .gravityConst(1000);
 }
 
 function createPipes(){
+    if(__gamePaused)
+        return;
+
     var heightOfUpperPipe = Math.floor(Math.random() * 100) + 30;
     var heightOfLowerPipe = Math.floor(Math.random() * 100) + 30;
 
@@ -139,3 +179,16 @@ function createPipes(){
         })
         .velocity().x = -50;
 }
+
+/* Global KEY EVENTS */
+Crafty.bind('KeyDown', function(event) {
+    if(event.keyCode === Crafty.keys.P){
+        __gamePaused = !__gamePaused;
+        if(__gamePaused){
+            stopBackground();
+        }
+        else{
+            startBackground();
+        }
+    }
+});

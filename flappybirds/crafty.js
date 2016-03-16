@@ -2230,7 +2230,6 @@ Crafty.fn = Crafty.prototype = {
 
     init: function (selector) {
         //select entities by component
-        console.log("Crafty.fn.init...");
         if (typeof selector === "string") {
             var elem = 0, //index elements
                 e, //entity forEach
