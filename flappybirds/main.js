@@ -115,7 +115,8 @@ function spawnBird() {
       .bind("CheckJumping", function(ground){
         /* We do this because it would be false as the bird is 'jumping' in mid-air */
         bird.canJump = true;
-        bird.vrotation = 0;
+        bird.rotation = -45;
+        //bird.vrotation = 0;
       })
       .bind("NewDirection", function(o){
 
