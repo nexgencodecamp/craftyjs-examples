@@ -121,12 +121,12 @@ function spawnBird() {
 
       })
       .bind("Moved", function(o){
-        if(o.oldValue > 445){
-            bird.rotation = 0;
+        if(o.oldValue > 435){
+            bird.rotation = 90;
             bird.vrotation = 0;
             return;
         }
-        bird.vrotation = 40;
+        bird.vrotation = 130;
       })
       .gravity("Ground")
       .gravityConst(1000);
