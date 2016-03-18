@@ -23,23 +23,51 @@ Crafty.load(birdSpriteImages);
 
 Crafty.init(800, 600, document.getElementById('gamecanvas'));
 
-Crafty.background( '#000000 url(img/background.png) no-repeat center center');
+//Crafty.background( '#000000 url(img/background.png) no-repeat center center');
+
+Crafty.scene('Splash', function() {
+    Crafty.background('#000000');
+    Crafty.e('2D, DOM, Text, Color')
+        .attr({ x: 400, y: 300 })
+        .text('SPLASH')
+        .textColor('#FFFF00');
+});
+
+//Crafty.scene('Splash');
+
+function load_scene(scene, duration) {
+    Crafty.e("2D, Canvas, Tween, Color")
+        .attr({alpha:0.0, x:0, y:0, w:800, h:600})
+        .color("#000000")
+        .tween({alpha: 1.0}, duration)
+        .bind("TweenEnd", function() {
+            Crafty.scene(scene);
+            // Crafty.e("2D, Canvas, Tween, Color")
+            //     .attr({alpha:1.0, x:0, y:0, w:800, h:600})
+            //     .color("#4EC0CA")
+            //     .tween({alpha: 0.0}, duration);
+        });
+}
+
+load_scene('Splash', 4000);
 
 /* Create all the layers on top of the background */
-createGroundLayer(0);
-createGroundLayer(1008);
-createSkyLayer(0);
-createSkyLayer(1104);
-createCeilingLayer(0);
-createCeilingLayer(928);
+// createGroundLayer(0);
+// createGroundLayer(1008);
+// createSkyLayer(0);
+// createSkyLayer(1104);
+// createCeilingLayer(0);
+// createCeilingLayer(928);
 
-/* Add player */
-spawnBird();
+//  Add player
+// spawnBird();
 
-/* Kick it off! */
-startBackground();
-window.setInterval(checkBackground, 1000);
-window.setInterval(createPipes, 3000);
+// /* Kick it off! */
+// startBackground();
+// window.setInterval(checkBackground, 1000);
+// window.setInterval(createPipes, 3000);
+
+
 
 function startBackground(){
     for(var i=0; i < groundLayers.length; i++){
