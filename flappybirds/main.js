@@ -8,6 +8,7 @@
 
 /* GLOBAL STATE VARIABLES START WITH A __ */
 var __gamePaused = false;
+var __gameEnded = false;
 
 var groundLayers = [];
 var skyLayers = [];
@@ -15,6 +16,7 @@ var ceilingLayers = [];
 var currentGroundLayer = 0;
 var currentSkyLayer = 0;
 var currentCeilingLayer = 0;
+var _upperPipe, _lowerPipe, _upperPipeColumn, _lowerPipeColumn;
 
 var birdSpriteImages = {"sprites": {"img/bird.png": {tile: 34, tileh: 24, map: { bird_start: [0, 0], bird_end: [0, 3]}}}};
 Crafty.load(birdSpriteImages);
@@ -63,6 +65,17 @@ function stopBackground(){
     }
 }
 
+function stopPipeProduction(){
+    if(_lowerPipe)
+        _lowerPipe.velocity().x = 0;
+    if(_lowerPipeColumn)
+        _lowerPipeColumn.velocity().x = 0;
+    if(_upperPipe)
+        _upperPipe.velocity().x = 0;
+    if(_upperPipeColumn)
+        _upperPipeColumn.velocity().x = 0;
+}
+
 function checkBackground(){
     if(__gamePaused){
         return;
@@ -107,7 +120,7 @@ function createCeilingLayer(offset){
 
 function spawnBird() {
     var currentYValue = 0;
-    var bird = Crafty.e('2D, DOM, bird_start, AngularMotion, SpriteAnimation, Jumper, Gravity, GroundAttacher, Collision, Solid')
+    var bird = Crafty.e('2D, DOM, bird_start, AngularMotion, SpriteAnimation, Jumper, Gravity, Collision, Solid')
       .attr({x: 100, y: 300, z: 10 })
       .reel("fly", 500, [[0, 0], [0, 1], [0, 2], [0, 3]])
       .animate("fly", -1)
@@ -116,10 +129,6 @@ function spawnBird() {
         /* We do this because it would be false as the bird is 'jumping' in mid-air */
         bird.canJump = true;
         bird.rotation = -45;
-        //bird.vrotation = 0;
-      })
-      .bind("NewDirection", function(o){
-
       })
       .bind("Moved", function(o){
         if(o.oldValue > 435){
@@ -130,55 +139,64 @@ function spawnBird() {
         bird.vrotation = 130;
       })
       .gravity("Ground")
-      .gravityConst(1000);
+      .gravityConst(1000)
+      .onHit("Ground", function(o){
+        haltGame();
+      });
 }
 
 function createPipes(){
-    if(__gamePaused)
+    if(__gamePaused || __gameEnded)
         return;
 
     var heightOfUpperPipe = Math.floor(Math.random() * 100) + 30;
     var heightOfLowerPipe = Math.floor(Math.random() * 100) + 30;
 
     /* Create upper pipe */
-    var upperPipe = Crafty.e("2D, DOM, Image, Motion")
+    _upperPipe = Crafty.e("2D, DOM, Image, Motion")
         .attr({x: 450, y: 488 - heightOfUpperPipe - 26, z: 2, w: 52, h: 26})
         .image("img/pipe-up.png")
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
-        })
-        .velocity().x = -50;
+        });
+        _upperPipe.velocity().x = -50;
 
     /* Create pipe in between */
-    var upperPipeColumn = Crafty.e("2D, DOM, Image, Motion")
+    _upperPipeColumn = Crafty.e("2D, DOM, Image, Motion")
         .attr({x: 450, y: 488 - heightOfUpperPipe, z: 2, w: 52, h: heightOfUpperPipe})
         .image("img/pipe.png", "repeat-y")
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
-        })
-        .velocity().x = -50;
+        });
+        _upperPipeColumn.velocity().x = -50;
 
     /* Create lower pipe */
-    var lowerPipe = Crafty.e("2D, DOM, Image, Motion")
+    _lowerPipe = Crafty.e("2D, DOM, Image, Motion")
         .attr({x: 450, y: 100 + heightOfLowerPipe, z: 2, w: 52, h: 26})
         .image("img/pipe-down.png")
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
-        })
-        .velocity().x = -50;
+        });
+        _lowerPipe.velocity().x = -50;
 
     /* Create pipe in between */
-    var lowerPipeColumn = Crafty.e("2D, DOM, Image, Motion")
+    _lowerPipeColumn = Crafty.e("2D, DOM, Image, Motion")
         .attr({x: 450, y: 100, z: 2, w: 52, h: heightOfLowerPipe})
         .image("img/pipe.png", "repeat-y")
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
-        })
-        .velocity().x = -50;
+        });
+        _lowerPipeColumn.velocity().x = -50;
+}
+
+function haltGame(){
+    __gameEnded = true;
+    stopBackground();
+    stopPipeProduction();
 }
 
 /* Global KEY EVENTS */
