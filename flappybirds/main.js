@@ -9,6 +9,7 @@
 /* GLOBAL STATE VARIABLES START WITH A __ */
 var __gamePaused = false;
 var __gameEnded = false;
+var __gameHolding = true; /* The state before anything happens  */
 
 var groundLayers = [];
 var skyLayers = [];
@@ -17,57 +18,73 @@ var currentGroundLayer = 0;
 var currentSkyLayer = 0;
 var currentCeilingLayer = 0;
 var _upperPipe, _lowerPipe, _upperPipeColumn, _lowerPipeColumn;
+var _splash, _gameOverBoard, _replayButton;
 
 var birdSpriteImages = {"sprites": {"img/bird.png": {tile: 34, tileh: 24, map: { bird_start: [0, 0], bird_end: [0, 3]}}}};
 Crafty.load(birdSpriteImages);
-
 Crafty.init(800, 600, document.getElementById('gamecanvas'));
 
-//Crafty.background( '#000000 url(img/background.png) no-repeat center center');
-
-Crafty.scene('Splash', function() {
-    Crafty.background('#000000');
-    Crafty.e('2D, DOM, Text, Color')
-        .attr({ x: 400, y: 300 })
-        .text('SPLASH')
-        .textColor('#FFFF00');
+Crafty.scene('Publisher', function() {
+    Crafty.e("2D, Canvas, Image").image("img/publisher.png");
 });
 
-//Crafty.scene('Splash');
+Crafty.defineScene("loading", function() {
+    //Crafty.background("#000");
+    Crafty.e("2D, DOM, Text")
+          .attr({ w: 100, h: 20, x: 150, y: 120 })
+          .text("Loading")
+          .css({ "text-align": "center"})
+          .textColor("#FFFFFF");
+});
 
 function load_scene(scene, duration) {
     Crafty.e("2D, Canvas, Tween, Color")
         .attr({alpha:0.0, x:0, y:0, w:800, h:600})
-        .color("#000000")
         .tween({alpha: 1.0}, duration)
         .bind("TweenEnd", function() {
             Crafty.scene(scene);
-            // Crafty.e("2D, Canvas, Tween, Color")
-            //     .attr({alpha:1.0, x:0, y:0, w:800, h:600})
-            //     .color("#4EC0CA")
-            //     .tween({alpha: 0.0}, duration);
+            Crafty.e("2D, Canvas, Tween, Color")
+                 .attr({alpha:1.0, x:0, y:0, w:800, h:600})
+                 .color("#000")
+                 .tween({alpha: 0.0}, 4000)
+                 .bind("TweenEnd", function(){
+
+                    Crafty.e("2D, Canvas, Image").image("img/background.png");
+                    Crafty.scene("square");
+                 });
         });
 }
 
-load_scene('Splash', 4000);
+Crafty.defineScene("square", function(attributes) {
+    Crafty.background( 'url(img/background.png) no-repeat center center');
+    /* Create all the layers on top of the background */
+    createGroundLayer(0);
+    createGroundLayer(1008);
+    createSkyLayer(0);
+    createSkyLayer(1104);
+    createCeilingLayer(0);
+    createCeilingLayer(928);
 
-/* Create all the layers on top of the background */
-// createGroundLayer(0);
-// createGroundLayer(1008);
-// createSkyLayer(0);
-// createSkyLayer(1104);
-// createCeilingLayer(0);
-// createCeilingLayer(928);
+    /*Add player*/
+    spawnBird();
 
-//  Add player
-// spawnBird();
+    /* Kick it off! */
+    startBackground();
+    window.setInterval(checkBackground, 1000);
 
-// /* Kick it off! */
-// startBackground();
-// window.setInterval(checkBackground, 1000);
-// window.setInterval(createPipes, 3000);
+    /* Set Splash */
+    setSplash();
 
+    window.setInterval(createPipes, 3000);
+});
 
+load_scene('Publisher', 1000);
+
+function setSplash(){
+    _splash = Crafty.e("2D, Canvas, Image")
+        .attr({x: 150, y: 200 })
+        .image("img/splash.png");
+}
 
 function startBackground(){
     for(var i=0; i < groundLayers.length; i++){
@@ -94,14 +111,7 @@ function stopBackground(){
 }
 
 function stopPipeProduction(){
-    if(_lowerPipe)
-        _lowerPipe.velocity().x = 0;
-    if(_lowerPipeColumn)
-        _lowerPipeColumn.velocity().x = 0;
-    if(_upperPipe)
-        _upperPipe.velocity().x = 0;
-    if(_upperPipeColumn)
-        _upperPipeColumn.velocity().x = 0;
+    Crafty.trigger("halt-pipe");
 }
 
 function checkBackground(){
@@ -152,11 +162,27 @@ function spawnBird() {
       .attr({x: 100, y: 300, z: 10 })
       .reel("fly", 500, [[0, 0], [0, 1], [0, 2], [0, 3]])
       .animate("fly", -1)
-      .jumper(300, ['SPACE'])
+      .jumper(75, ['SPACE'])
       .bind("CheckJumping", function(ground){
         /* We do this because it would be false as the bird is 'jumping' in mid-air */
-        bird.canJump = true;
-        bird.rotation = -45;
+        if(__gameEnded){
+            bird.canJump = false;
+        }
+        else if(__gameHolding){
+            bird.canJump = false;
+            /* Remove splash */
+            _splash.destroy();
+
+            /* Set gravitational const for bird */
+            this.gravityConst(300);
+
+            /* Set holding to false - will start pipe production */
+            __gameHolding = false;
+        }
+        else{
+            bird.canJump = true;
+            bird.rotation = -30 ;
+        }
       })
       .bind("Moved", function(o){
         if(o.oldValue > 435){
@@ -166,15 +192,20 @@ function spawnBird() {
         }
         bird.vrotation = 130;
       })
+      .bind("reset-bird", function(){
+        this.attr({x: 100, y: 300, z: 10 })
+        .gravityConst(0);
+        this.rotation = 0;
+      })
       .gravity("Ground")
-      .gravityConst(1000)
+      .gravityConst(0)
       .onHit("Ground", function(o){
         haltGame();
       });
 }
 
 function createPipes(){
-    if(__gamePaused || __gameEnded)
+    if(__gamePaused || __gameEnded || __gameHolding)
         return;
 
     var heightOfUpperPipe = Math.floor(Math.random() * 100) + 30;
@@ -187,7 +218,13 @@ function createPipes(){
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
-        });
+        })
+        .bind('halt-pipe', function(){
+            this.velocity().x = 0;
+        })
+        .bind('clear-pipe', function(){
+            this.destroy();
+        })
         _upperPipe.velocity().x = -50;
 
     /* Create pipe in between */
@@ -197,7 +234,13 @@ function createPipes(){
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
-        });
+        })
+        .bind('halt-pipe', function(){
+            this.velocity().x = 0;
+        })
+        .bind('clear-pipe', function(){
+            this.destroy();
+        })
         _upperPipeColumn.velocity().x = -50;
 
     /* Create lower pipe */
@@ -207,7 +250,13 @@ function createPipes(){
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
-        });
+        })
+        .bind('halt-pipe', function(){
+            this.velocity().x = 0;
+        })
+        .bind('clear-pipe', function(){
+            this.destroy();
+        })
         _lowerPipe.velocity().x = -50;
 
     /* Create pipe in between */
@@ -217,14 +266,60 @@ function createPipes(){
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
-        });
+        })
+        .bind('halt-pipe', function(){
+            this.velocity().x = 0;
+        })
+        .bind('clear-pipe', function(){
+            this.destroy();
+        })
         _lowerPipeColumn.velocity().x = -50;
 }
 
 function haltGame(){
+    if(__gameEnded)
+        return;
+
     __gameEnded = true;
     stopBackground();
     stopPipeProduction();
+    showGameOver();
+    showReplay();
+}
+
+function showGameOver(){
+    _gameOverBoard = Crafty.e("2D, DOM, Image")
+        .attr({ x: 50, y: 150, z: 10})
+        .image("img/scoreboard.png");
+}
+
+function showReplay(){
+    _replayButton = Crafty.e("2D, DOM, Image")
+        .attr({ x: 110, y: 360, z: 10 })
+        .image("img/replay.png")
+        .bind("KeyDown", function(event){
+            if(event.keyCode === Crafty.keys.SPACE){
+                /* We know that this is a game restart so... */
+                restartGame();
+            }
+        });
+}
+
+function restartGame(){
+    /* Remove the game over sign */
+    _gameOverBoard.destroy();
+    _replayButton.destroy();
+
+    /* Flip the _gameEnded state */
+    __gameEnded = false;
+    __gameHolding = true;
+
+    /* Reset Bird */
+    Crafty.trigger('reset-bird');
+    Crafty.trigger('clear-pipe');
+
+    /* Set splash screen */
+    setSplash();
 }
 
 /* Global KEY EVENTS */
