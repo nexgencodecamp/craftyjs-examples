@@ -10,6 +10,7 @@
 var __gamePaused = false;
 var __gameEnded = false;
 var __gameHolding = true; /* The state before anything happens  */
+var __score = 0;
 
 var groundLayers = [];
 var skyLayers = [];
@@ -19,9 +20,20 @@ var currentSkyLayer = 0;
 var currentCeilingLayer = 0;
 var _upperPipe, _lowerPipe, _upperPipeColumn, _lowerPipeColumn;
 var _splash, _gameOverBoard, _replayButton;
+var _vxBackground = -100;
+var _vxSky = -40;
 
+/* Load Sprites */
 var birdSpriteImages = {"sprites": {"img/bird.png": {tile: 34, tileh: 24, map: { bird_start: [0, 0], bird_end: [0, 3]}}}};
 Crafty.load(birdSpriteImages);
+
+/* Load Sounds */
+Crafty.audio.add("bird-jump", "sounds/sfx_wing.ogg");
+Crafty.audio.add("pipe-hit", "sounds/sfx_hit.ogg");
+//Crafty.audio.add("bird-jump", "sounds/sfx_point.ogg");
+//Crafty.audio.add("bird-jump", "sounds/sfx_swooshing.ogg");
+//Crafty.audio.add("bird-jump", "sounds/sfx_die.ogg");
+
 Crafty.init(800, 600, document.getElementById('gamecanvas'));
 
 Crafty.scene('Publisher', function() {
@@ -29,7 +41,6 @@ Crafty.scene('Publisher', function() {
 });
 
 Crafty.defineScene("loading", function() {
-    //Crafty.background("#000");
     Crafty.e("2D, DOM, Text")
           .attr({ w: 100, h: 20, x: 150, y: 120 })
           .text("Loading")
@@ -75,7 +86,7 @@ Crafty.defineScene("square", function(attributes) {
     /* Set Splash */
     setSplash();
 
-    window.setInterval(createPipes, 3000);
+    window.setInterval(createPipes, 1500);
 });
 
 load_scene('Publisher', 1000);
@@ -88,13 +99,13 @@ function setSplash(){
 
 function startBackground(){
     for(var i=0; i < groundLayers.length; i++){
-        groundLayers[i].velocity().x = -50;
+        groundLayers[i].velocity().x = _vxBackground;
     }
     for(var j=0; j < skyLayers.length; j++){
-        skyLayers[j].velocity().x = -20;
+        skyLayers[j].velocity().x = _vxSky;
     }
     for(var k=0; k < ceilingLayers.length; k++){
-        ceilingLayers[k].velocity().x = -50;
+        ceilingLayers[k].velocity().x = _vxBackground;
     }
 }
 
@@ -150,14 +161,13 @@ function createSkyLayer(offset){
 }
 
 function createCeilingLayer(offset){
-    var ceiling = Crafty.e("2D, DOM, Image, Motion")
+    var ceiling = Crafty.e("2D, DOM, Image, Motion, Solid")
         .attr({x: offset, y: 84, z: 0, w: 928, h: 16})
         .image("img/ceiling.png", "repeat-x");
     ceilingLayers.push(ceiling);
 }
 
 function spawnBird() {
-    var currentYValue = 0;
     var bird = Crafty.e('2D, DOM, bird_start, AngularMotion, SpriteAnimation, Jumper, Gravity, Collision, Solid')
       .attr({x: 100, y: 300, z: 10 })
       .reel("fly", 500, [[0, 0], [0, 1], [0, 2], [0, 3]])
@@ -182,29 +192,48 @@ function spawnBird() {
         else{
             bird.canJump = true;
             bird.rotation = -30 ;
+            Crafty.audio.play('bird-jump',1,1);
         }
       })
       .bind("Moved", function(o){
-        if(o.oldValue > 435){
+        /* Make sure bird does not overrotate*/
+        if(bird._rotation >= 90)
             bird.rotation = 90;
-            bird.vrotation = 0;
-            return;
-        }
-        bird.vrotation = 130;
+        bird.vrotation = 60;
       })
       .bind("reset-bird", function(){
         this.attr({x: 100, y: 300, z: 10 })
         .gravityConst(0);
         this.rotation = 0;
+        this.enableControl();
       })
       .gravity("Ground")
       .gravityConst(0)
       .onHit("Ground", function(o){
+        this.vrotation = 0;
+        this.velocity().x = 0;
         haltGame();
+      })
+      .checkHits('Solid')
+      .bind("HitOn", function(hitData) {
+        /* We hit something - death sequence follows */
+        if(this.wasHit)
+            return;
+
+        Crafty.audio.play('pipe-hit', 1, 1);
+        this.disableControl();
+        this.gravityConst(600);
+        this.vrotation = 180;
+        this.velocity().x = 10;
+        this.wasHit = true;
       });
 }
 
 function createPipes(){
+    var pipeX = 850;
+    var upperPipeY = 488
+    var lowerPipeY = 100;
+
     if(__gamePaused || __gameEnded || __gameHolding)
         return;
 
@@ -212,8 +241,8 @@ function createPipes(){
     var heightOfLowerPipe = Math.floor(Math.random() * 100) + 30;
 
     /* Create upper pipe */
-    _upperPipe = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: 450, y: 488 - heightOfUpperPipe - 26, z: 2, w: 52, h: 26})
+    _upperPipe = Crafty.e("PipeU, 2D, DOM, Image, Motion, Solid")
+        .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe - 26, z: 2, w: 52, h: 26})
         .image("img/pipe-up.png")
         .bind("EnterFrame", function(){
             if(this.x < -52)
@@ -225,11 +254,11 @@ function createPipes(){
         .bind('clear-pipe', function(){
             this.destroy();
         })
-        _upperPipe.velocity().x = -50;
+        _upperPipe.velocity().x = _vxBackground;
 
     /* Create pipe in between */
-    _upperPipeColumn = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: 450, y: 488 - heightOfUpperPipe, z: 2, w: 52, h: heightOfUpperPipe})
+    _upperPipeColumn = Crafty.e("PipeUC, 2D, DOM, Image, Motion, Solid")
+        .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe, z: 2, w: 52, h: heightOfUpperPipe})
         .image("img/pipe.png", "repeat-y")
         .bind("EnterFrame", function(){
             if(this.x < -52)
@@ -241,11 +270,11 @@ function createPipes(){
         .bind('clear-pipe', function(){
             this.destroy();
         })
-        _upperPipeColumn.velocity().x = -50;
+        _upperPipeColumn.velocity().x = _vxBackground;
 
     /* Create lower pipe */
-    _lowerPipe = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: 450, y: 100 + heightOfLowerPipe, z: 2, w: 52, h: 26})
+    _lowerPipe = Crafty.e("PipeL, 2D, DOM, Image, Motion, Solid")
+        .attr({x: pipeX, y: _upperPipe.y - 150, z: 2, w: 52, h: 26})
         .image("img/pipe-down.png")
         .bind("EnterFrame", function(){
             if(this.x < -52)
@@ -257,11 +286,11 @@ function createPipes(){
         .bind('clear-pipe', function(){
             this.destroy();
         })
-        _lowerPipe.velocity().x = -50;
+        _lowerPipe.velocity().x = _vxBackground;
 
     /* Create pipe in between */
-    _lowerPipeColumn = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: 450, y: 100, z: 2, w: 52, h: heightOfLowerPipe})
+    _lowerPipeColumn = Crafty.e("PipeLC, 2D, DOM, Image, Motion, Solid")
+        .attr({x: pipeX, y: lowerPipeY, z: 2, w: 52, h: _lowerPipe.y - 100})
         .image("img/pipe.png", "repeat-y")
         .bind("EnterFrame", function(){
             if(this.x < -52)
@@ -273,7 +302,7 @@ function createPipes(){
         .bind('clear-pipe', function(){
             this.destroy();
         })
-        _lowerPipeColumn.velocity().x = -50;
+        _lowerPipeColumn.velocity().x = _vxBackground;
 }
 
 function haltGame(){
@@ -320,7 +349,14 @@ function restartGame(){
 
     /* Set splash screen */
     setSplash();
+
+    /* Start the background */
+    startBackground();
 }
+
+function updateScore(){
+
+};
 
 /* Global KEY EVENTS */
 Crafty.bind('KeyDown', function(event) {
