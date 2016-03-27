@@ -206,6 +206,7 @@ function spawnBird() {
         .gravityConst(0);
         this.rotation = 0;
         this.enableControl();
+        this.wasHit = false;
       })
       .gravity("Ground")
       .gravityConst(0)
@@ -222,9 +223,9 @@ function spawnBird() {
 
         Crafty.audio.play('pipe-hit', 1, 1);
         this.disableControl();
-        this.gravityConst(600);
-        this.vrotation = 180;
-        this.velocity().x = 10;
+        this.gravityConst(1000);
+        this.vrotation = -90
+        this.velocity().x = -100;
         this.wasHit = true;
       });
 }
