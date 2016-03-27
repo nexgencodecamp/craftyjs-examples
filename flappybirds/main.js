@@ -11,7 +11,7 @@ var __gamePaused = false;
 var __gameEnded = false;
 var __gameHolding = true; /* The state before anything happens  */
 var __score = 0;
-var __scoreImage;
+var __scoreImage, __scoreUnitsImage, __scoreTensImage;
 
 var groundLayers = [];
 var skyLayers = [];
@@ -377,16 +377,19 @@ function updateScore(delta){
     var tens = updateTens();
     var units = updateUnits();
 
-    __scoreTensImage = Crafty.e("2D, Canvas, Image").image("img/font_big_"+ tens +".png");
-    __scoreUnitsImage = Crafty.e("2D, Canvas, Image").attr({x: 27}).image("img/font_big_"+ units +".png");
+    if(tens)
+        __scoreTensImage = Crafty.e("2D, Canvas, Image").image("img/font_big_"+ tens +".png");
+    if(units)
+        __scoreUnitsImage = Crafty.e("2D, Canvas, Image").attr({x: 27}).image("img/font_big_"+ units +".png");
 };
 
 function updateTens(){
-
+    if(__score >= 10)
+        return Math.floor(__score / 10 );
 }
 
 function updateUnits(){
-
+    return __score % 10;
 }
 
 /* Global KEY EVENTS */
