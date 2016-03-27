@@ -11,7 +11,7 @@ var __gamePaused = false;
 var __gameEnded = false;
 var __gameHolding = true; /* The state before anything happens  */
 var __score = 0;
-var __scoreImage, __scoreUnitsImage, __scoreTensImage;
+var __scoreImage, __scoreUnitsImage, __scoreTensImage, __scoreUnitsImageSmall, __scoreTensImageSmall;
 
 var groundLayers = [];
 var skyLayers = [];
@@ -23,6 +23,7 @@ var _upperPipe, _lowerPipe, _upperPipeColumn, _lowerPipeColumn;
 var _splash, _gameOverBoard, _replayButton;
 var _vxBackground = -100;
 var _vxSky = -40;
+var _bird;
 
 /* Load Sprites */
 var birdSpriteImages = {"sprites": {"img/Penguin34px.png": {tile: 34, tileh: 34, map: { bird_start: [0, 0], bird_end: [3, 0]}}}};
@@ -31,7 +32,7 @@ Crafty.load(birdSpriteImages);
 /* Load Sounds */
 Crafty.audio.add("bird-jump", "sounds/sfx_wing.ogg");
 Crafty.audio.add("pipe-hit", "sounds/sfx_hit.ogg");
-//Crafty.audio.add("bird-jump", "sounds/sfx_point.ogg");
+Crafty.audio.add("bird-point", "sounds/sfx_point.ogg");
 //Crafty.audio.add("bird-jump", "sounds/sfx_swooshing.ogg");
 //Crafty.audio.add("bird-jump", "sounds/sfx_die.ogg");
 
@@ -169,7 +170,7 @@ function createCeilingLayer(offset){
 }
 
 function spawnBird() {
-    var bird = Crafty.e('2D, DOM, bird_start, AngularMotion, SpriteAnimation, Jumper, Gravity, Collision, Solid')
+    _bird = Crafty.e('2D, DOM, bird_start, AngularMotion, SpriteAnimation, Jumper, Gravity, Collision, Solid')
       .attr({x: 100, y: 300, z: 10 })
       .reel("fly", 250, [[0, 0], [1, 0], [1, 0], [1, 0]])
       .animate("fly", -1)
@@ -180,7 +181,7 @@ function spawnBird() {
             bird.canJump = false;
         }
         else if(__gameHolding){
-            bird.canJump = false;
+            _bird.canJump = false;
             /* Remove splash */
             _splash.destroy();
 
@@ -194,16 +195,16 @@ function spawnBird() {
             updateScore(0);
         }
         else{
-            bird.canJump = true;
-            bird.rotation = -30 ;
+            _bird.canJump = true;
+            _bird.rotation = -30 ;
             Crafty.audio.play('bird-jump',1,1);
         }
       })
       .bind("Moved", function(o){
         /* Make sure bird does not overrotate*/
-        if(bird._rotation >= 90)
-            bird.rotation = 90;
-        bird.vrotation = 60;
+        if(_bird._rotation >= 90)
+            _bird.rotation = 90;
+        _bird.vrotation = 60;
       })
       .bind("reset-bird", function(){
         this.attr({x: 100, y: 300, z: 10 })
@@ -225,6 +226,7 @@ function spawnBird() {
         if(this.wasHit)
             return;
 
+        stopPipeProduction();
         Crafty.audio.play('pipe-hit', 1, 1);
         this.disableControl();
         this.gravityConst(1000);
@@ -240,7 +242,7 @@ function createPipes(){
     var upperPipeY = 488
     var lowerPipeY = 100;
 
-    if(__gamePaused || __gameEnded || __gameHolding)
+    if(__gamePaused || __gameEnded || __gameHolding || _bird.wasHit)
         return;
 
     var heightOfUpperPipe = Math.floor(Math.random() * 100) + 30;
@@ -258,6 +260,7 @@ function createPipes(){
             if(this.x <= 100 && this.pipePassed === undefined){
                 updateScore(1);
                 this.pipePassed = true;
+                Crafty.audio.play('bird-point',1,1);
             }
         })
         .bind('halt-pipe', function(){
@@ -323,7 +326,6 @@ function haltGame(){
 
     __gameEnded = true;
     stopBackground();
-    stopPipeProduction();
     showGameOver();
     showReplay();
 }
@@ -332,6 +334,8 @@ function showGameOver(){
     _gameOverBoard = Crafty.e("2D, DOM, Image")
         .attr({ x: 50, y: 150, z: 10})
         .image("img/scoreboard.png");
+
+    updateScoreOnGameBoard();
 }
 
 function showReplay(){
@@ -347,6 +351,17 @@ function showReplay(){
 }
 
 function restartGame(){
+    /* Reset score */
+    __score = 0;
+    if(__scoreTensImage)
+        __scoreTensImage.destroy();
+    if(__scoreUnitsImage)
+        __scoreUnitsImage.destroy();
+    if(__scoreTensImageSmall)
+        __scoreTensImageSmall.destroy();
+    if(__scoreUnitsImageSmall)
+        __scoreUnitsImageSmall.destroy();
+
     /* Remove the game over sign */
     _gameOverBoard.destroy();
     _replayButton.destroy();
@@ -366,6 +381,21 @@ function restartGame(){
     startBackground();
 }
 
+function updateScoreOnGameBoard(){
+    var tens = updateTens();
+    var units = updateUnits();
+
+    if(__scoreTensImageSmall)
+        __scoreTensImageSmall.destroy();
+    if(__scoreUnitsImageSmall)
+        __scoreUnitsImageSmall.destroy();
+
+    if(tens)
+        __scoreTensImageSmall = Crafty.e("2D, DOM, Image").attr({x: 230, y: 256, z: 10}).image("img/font_small_"+ tens +".png");
+    if(units >= 0)
+        __scoreUnitsImageSmall = Crafty.e("2D, DOM, Image").attr({x: 246, y: 256, z: 10}).image("img/font_small_"+ units +".png");
+}
+
 function updateScore(delta){
     __score += delta;
 
@@ -378,9 +408,9 @@ function updateScore(delta){
     var units = updateUnits();
 
     if(tens)
-        __scoreTensImage = Crafty.e("2D, Canvas, Image").image("img/font_big_"+ tens +".png");
-    if(units)
-        __scoreUnitsImage = Crafty.e("2D, Canvas, Image").attr({x: 27}).image("img/font_big_"+ units +".png");
+        __scoreTensImage = Crafty.e("2D, Canvas, Image").attr({x: 742, y: 6}).image("img/font_big_"+ tens +".png");
+    if(units >= 0)
+        __scoreUnitsImage = Crafty.e("2D, Canvas, Image").attr({x: 770, y: 6}).image("img/font_big_"+ units +".png");
 };
 
 function updateTens(){
