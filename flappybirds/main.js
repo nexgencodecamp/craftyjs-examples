@@ -25,7 +25,7 @@ var _vxBackground = -100;
 var _vxSky = -40;
 
 /* Load Sprites */
-var birdSpriteImages = {"sprites": {"img/bird.png": {tile: 34, tileh: 24, map: { bird_start: [0, 0], bird_end: [0, 3]}}}};
+var birdSpriteImages = {"sprites": {"img/Penguin34px.png": {tile: 34, tileh: 34, map: { bird_start: [0, 0], bird_end: [3, 0]}}}};
 Crafty.load(birdSpriteImages);
 
 /* Load Sounds */
@@ -171,7 +171,7 @@ function createCeilingLayer(offset){
 function spawnBird() {
     var bird = Crafty.e('2D, DOM, bird_start, AngularMotion, SpriteAnimation, Jumper, Gravity, Collision, Solid')
       .attr({x: 100, y: 300, z: 10 })
-      .reel("fly", 500, [[0, 0], [0, 1], [0, 2], [0, 3]])
+      .reel("fly", 250, [[0, 0], [1, 0], [1, 0], [1, 0]])
       .animate("fly", -1)
       .jumper(75, ['SPACE'])
       .bind("CheckJumping", function(ground){
