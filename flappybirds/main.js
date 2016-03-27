@@ -381,7 +381,13 @@ function updateScore(delta){
     __scoreUnitsImage = Crafty.e("2D, Canvas, Image").attr({x: 27}).image("img/font_big_"+ units +".png");
 };
 
+function updateTens(){
 
+}
+
+function updateUnits(){
+
+}
 
 /* Global KEY EVENTS */
 Crafty.bind('KeyDown', function(event) {
