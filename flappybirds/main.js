@@ -11,6 +11,7 @@ var __gamePaused = false;
 var __gameEnded = false;
 var __gameHolding = true; /* The state before anything happens  */
 var __score = 0;
+var __scoreImage;
 
 var groundLayers = [];
 var skyLayers = [];
@@ -188,6 +189,9 @@ function spawnBird() {
 
             /* Set holding to false - will start pipe production */
             __gameHolding = false;
+
+            /* Update the score as this is the beginning */
+            updateScore(0);
         }
         else{
             bird.canJump = true;
@@ -226,6 +230,7 @@ function spawnBird() {
         this.gravityConst(1000);
         this.vrotation = -90
         this.velocity().x = -100;
+        this.velocity().y = -100;
         this.wasHit = true;
       });
 }
@@ -246,8 +251,14 @@ function createPipes(){
         .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe - 26, z: 2, w: 52, h: 26})
         .image("img/pipe-up.png")
         .bind("EnterFrame", function(){
+            /* Check if the pipe is offscreen and destroy it */
             if(this.x < -52)
                 this.destroy();
+            /* Check if the bird has caught up with this pipe */
+            if(this.x <= 100 && this.pipePassed === undefined){
+                updateScore(1);
+                this.pipePassed = true;
+            }
         })
         .bind('halt-pipe', function(){
             this.velocity().x = 0;
@@ -355,9 +366,22 @@ function restartGame(){
     startBackground();
 }
 
-function updateScore(){
+function updateScore(delta){
+    __score += delta;
 
+    if(__scoreUnitsImage)
+        __scoreUnitsImage.destroy();
+    if(__scoreTensImage)
+        __scoreTensImage.destroy();
+
+    var tens = updateTens();
+    var units = updateUnits();
+
+    __scoreTensImage = Crafty.e("2D, Canvas, Image").image("img/font_big_"+ tens +".png");
+    __scoreUnitsImage = Crafty.e("2D, Canvas, Image").attr({x: 27}).image("img/font_big_"+ units +".png");
 };
+
+
 
 /* Global KEY EVENTS */
 Crafty.bind('KeyDown', function(event) {
