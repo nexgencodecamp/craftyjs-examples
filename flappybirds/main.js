@@ -157,8 +157,8 @@ function createGroundLayer(offset){
 
 function createSkyLayer(offset){
     var sky = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: offset, y: 379, z: 0, w: 1104, h: 109})
-        .image("img/sky.png", "repeat-x");
+        .attr({x: offset, y: 175, z: 0, w: 1104, h: 316})
+        .image("img/sky404.png", "repeat-x");
     skyLayers.push(sky);
 }
 
@@ -174,7 +174,7 @@ function spawnBird() {
       .attr({x: 100, y: 300, z: 10 })
       .reel("fly", 250, [[0, 0], [1, 0], [1, 0], [1, 0]])
       .animate("fly", -1)
-      .jumper(75, ['SPACE'])
+      .jumper(100, ['SPACE'])
       .bind("CheckJumping", function(ground){
         /* We do this because it would be false as the bird is 'jumping' in mid-air */
         if(__gameEnded){
