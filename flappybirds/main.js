@@ -94,8 +94,8 @@ Crafty.defineScene("square", function(attributes) {
 load_scene('Publisher', 1000);
 
 function setSplash(){
-    _splash = Crafty.e("2D, Canvas, Image")
-        .attr({x: 150, y: 200 })
+    _splash = Crafty.e("2D, DOM, Image")
+        .attr({x: 150, y: 200, z: 20 })
         .image("img/splash.png");
 }
 
@@ -164,7 +164,7 @@ function createSkyLayer(offset){
 
 function createCeilingLayer(offset){
     var ceiling = Crafty.e("2D, DOM, Image, Motion, Solid")
-        .attr({x: offset, y: 84, z: 0, w: 928, h: 16})
+        .attr({x: offset, y: 40, z: 0, w: 928, h: 16})
         .image("img/ceiling.png", "repeat-x");
     ceilingLayers.push(ceiling);
 }
