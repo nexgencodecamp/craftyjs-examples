@@ -20,10 +20,17 @@ var currentGroundLayer = 0;
 var currentSkyLayer = 0;
 var currentCeilingLayer = 0;
 var _upperPipe, _lowerPipe, _upperPipeColumn, _lowerPipeColumn;
-var _splash, _gameOverBoard, _replayButton;
+var _splash, _gameOverBoard, _replayButton, _medal;
 var _vxBackground = -100;
 var _vxSky = -40;
 var _bird;
+
+var _medals = {
+    BRONZE: 0,
+    SILVER: 1,
+    GOLD: 2,
+    PLATINUM: 3
+}
 
 /* Load Sprites */
 var birdSpriteImages = {"sprites": {"img/Penguin34px.png": {tile: 34, tileh: 34, map: { bird_start: [0, 0], bird_end: [3, 0]}}}};
@@ -331,9 +338,31 @@ function haltGame(){
 }
 
 function showGameOver(){
+    var medal;
     _gameOverBoard = Crafty.e("2D, DOM, Image")
         .attr({ x: 50, y: 150, z: 10})
         .image("img/scoreboard.png");
+
+    /* Give the user a medal if score warrants it */
+    if(__score > 9 && __score < 20){
+        medal = _medals.BRONZE;
+    }
+    else if(__score > 19 && __score < 31){
+        medal = _medals.SILVER;
+    }
+    else if(__score > 30 && __score < 40){
+        medal = _medals.GOLD;
+    }
+    else if(__score > 39){
+        medal = _medals.PLATINUM;
+    }
+
+    if(medal !== undefined && medal > -1){
+        _medal = Crafty.e("2D, DOM, Image")
+            .attr({ x: 83, y: 265, z: 20})
+            .image("img/medal_"+medal+".png");
+
+    }
 
     updateScoreOnGameBoard();
 }
@@ -364,6 +393,7 @@ function restartGame(){
 
     /* Remove the game over sign */
     _gameOverBoard.destroy();
+    if(_medal) _medal.destroy();
     _replayButton.destroy();
 
     /* Flip the _gameEnded state */
