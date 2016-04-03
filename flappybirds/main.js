@@ -12,6 +12,7 @@ var __gameEnded = false;
 var __gameHolding = true; /* The state before anything happens  */
 var __score = 0;
 var __scoreImage, __scoreUnitsImage, __scoreTensImage, __scoreUnitsImageSmall, __scoreTensImageSmall;
+var __hiScore;
 
 var groundLayers = [];
 var skyLayers = [];
@@ -68,7 +69,6 @@ function load_scene(scene, duration) {
                  .color("#000")
                  .tween({alpha: 0.0}, 4000)
                  .bind("TweenEnd", function(){
-
                     Crafty.e("2D, Canvas, Image").image("img/background.png");
                     Crafty.scene("square");
                  });
@@ -84,6 +84,7 @@ Crafty.defineScene("square", function(attributes) {
     createSkyLayer(1104);
     createCeilingLayer(0);
     createCeilingLayer(928);
+    fetchHiScore();
 
     /*Add player*/
     spawnBird();
@@ -174,6 +175,27 @@ function createCeilingLayer(offset){
         .attr({x: offset, y: 40, z: 0, w: 928, h: 16})
         .image("img/ceiling.png", "repeat-x");
     ceilingLayers.push(ceiling);
+}
+
+function fetchHiScore(){
+    /* Fetch Hi-Score */
+    var hiScore = Crafty.storage('nexgen::flappybirds::hiscore');
+    if(!hiScore){
+        console.log('*** NO HI-SCORE ***');
+    }
+    createHiScore(hiScore);
+}
+
+function createHiScore(hiScore){
+    var result;
+    if(!hiScore){
+        result = 0;
+    }
+    else{
+        result = hiScore;
+    }
+
+    updateHiScoreOnGameBoard(result);
 }
 
 function spawnBird() {
@@ -424,6 +446,18 @@ function updateScoreOnGameBoard(){
         __scoreTensImageSmall = Crafty.e("2D, DOM, Image").attr({x: 230, y: 256, z: 10}).image("img/font_small_"+ tens +".png");
     if(units >= 0)
         __scoreUnitsImageSmall = Crafty.e("2D, DOM, Image").attr({x: 246, y: 256, z: 10}).image("img/font_small_"+ units +".png");
+}
+
+function updateHiScoreOnGameBoard(hs){
+    var hundreds, tens, units;
+    hundreds = Math.floor(hs / 100);
+    tens = (Math.floor(hs / 10) % 10);
+    units = hs % 10;
+
+    //Crafty.e("2D, DOM, Image").attr({x: 250, y: 6, z: 20}).image("img/font_big_"+ hundreds +".png");
+    //Crafty.e("2D, Canvas, Image").attr({x: 375, y: 6}).image("img/font_big_"+ tens +".png");
+    Crafty.e("2D, DOM, Image").attr({x: 450, y: 6, z: 20}).image("img/font_big_"+ units +".png");
+
 }
 
 function updateScore(delta){
