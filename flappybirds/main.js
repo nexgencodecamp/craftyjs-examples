@@ -13,10 +13,10 @@ var __gameHolding = true; /* The state before anything happens  */
 var __score = 0;
 var __scoreImage, __scoreUnitsImage, __scoreTensImage, __scoreUnitsImageSmall, __scoreTensImageSmall;
 var __hiScore;
+var __HI_SCORE_KEY__ = 'nexgen::flappybirds::hiscore';
 
 var groundLayers = [];
 var skyLayers = [];
-var ceilingLayers = [];
 var currentGroundLayer = 0;
 var currentSkyLayer = 0;
 var currentCeilingLayer = 0;
@@ -82,9 +82,7 @@ Crafty.defineScene("square", function(attributes) {
     createGroundLayer(1008);
     createSkyLayer(0);
     createSkyLayer(1104);
-    //createCeilingLayer(0);
-    //createCeilingLayer(928);
-    fetchHiScore();
+    createHiScore(fetchHiScore());
 
     /*Add player*/
     spawnBird();
@@ -114,9 +112,6 @@ function startBackground(){
     for(var j=0; j < skyLayers.length; j++){
         skyLayers[j].velocity().x = _vxSky;
     }
-    for(var k=0; k < ceilingLayers.length; k++){
-        ceilingLayers[k].velocity().x = _vxBackground;
-    }
 }
 
 function stopBackground(){
@@ -125,9 +120,6 @@ function stopBackground(){
     }
     for(var j=0; j < skyLayers.length; j++){
         skyLayers[j].velocity().x = 0;
-    }
-    for(var k=0; k < ceilingLayers.length; k++){
-        ceilingLayers[k].velocity().x = 0;
     }
 }
 
@@ -150,10 +142,6 @@ function checkBackground(){
         skyLayers[currentSkyLayer].x = skyLayers[currentSkyLayer == 0 ? 1 : 0].x + 1104;
         currentSkyLayer = currentSkyLayer == 0 ? 1 : 0 ;
     }
-    // if(ceilingLayers[currentCeilingLayer].x < -864){
-    //     ceilingLayers[currentCeilingLayer].x = ceilingLayers[currentCeilingLayer == 0 ? 1 : 0].x + 864;
-    //     currentCeilingLayer = currentCeilingLayer == 0 ? 1 : 0 ;
-    // }
 }
 
 function createGroundLayer(offset){
@@ -174,16 +162,17 @@ function createCeilingLayer(offset){
     var ceiling = Crafty.e("2D, DOM, Image, Motion, Solid")
         .attr({x: offset, y: 40, z: 0, w: 928, h: 16})
         .image("img/ceiling.png", "repeat-x");
-    ceilingLayers.push(ceiling);
 }
 
 function fetchHiScore(){
     /* Fetch Hi-Score */
-    var hiScore = Crafty.storage('nexgen::flappybirds::hiscore');
+    var hiScore = Crafty.storage(__HI_SCORE_KEY__);
     if(!hiScore){
-        console.log('*** NO HI-SCORE ***');
+        return -1;
     }
-    createHiScore(hiScore);
+    else{
+        return hiScore
+    }
 }
 
 function createHiScore(hiScore){
@@ -194,7 +183,6 @@ function createHiScore(hiScore){
     else{
         result = hiScore;
     }
-
     updateHiScoreOnGameBoard(result);
 }
 
@@ -366,6 +354,10 @@ function haltGame(){
     stopPipeProduction();
     showGameOver();
     showReplay();
+    var hiScore = fetchHiScore();
+    if(__score > hiScore){
+        Crafty.storage(__HI_SCORE_KEY__, __score);
+    }
 }
 
 function showGameOver(){
@@ -459,15 +451,20 @@ function updateScoreOnGameBoard(){
 }
 
 function updateHiScoreOnGameBoard(hs){
-    var hundreds, tens, units;
+    var hundreds, tens, units, hundredsSprite, tensSprite, unitSprite;
     hundreds = Math.floor(hs / 100);
     tens = (Math.floor(hs / 10) % 10);
     units = hs % 10;
 
-    //Crafty.e("2D, DOM, Image").attr({x: 250, y: 6, z: 20}).image("img/font_big_"+ hundreds +".png");
-    //Crafty.e("2D, Canvas, Image").attr({x: 375, y: 6}).image("img/font_big_"+ tens +".png");
-    Crafty.e("2D, DOM, Image").attr({x: 450, y: 6, z: 20}).image("img/font_big_"+ units +".png");
+    if(hundreds === 0 && tens === 0 && units === 0)
+        return;
 
+    if(hundreds > 0)
+        hundredsSprite = Crafty.e("Hundred, 2D, DOM, Image").attr({x: 10, y: 6}).image("img/font_big_"+hundreds+".png");
+    if(hundreds > 0 || (hundreds === 0 && tens > 0))
+        tensSprite = Crafty.e("Ten, 2D, DOM, Image").attr({x: 35, y: 6}).image("img/font_big_"+tens+".png");
+
+    unitSprite = Crafty.e("Unit, 2D, DOM, Image").attr({x: 60, y: 6}).image("img/font_big_"+units+".png");
 }
 
 function updateScore(delta){
