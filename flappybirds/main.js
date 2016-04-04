@@ -207,7 +207,7 @@ function spawnBird() {
       .bind("CheckJumping", function(ground){
         /* We do this because it would be false as the bird is 'jumping' in mid-air */
         if(__gameEnded){
-            bird.canJump = false;
+            _bird.canJump = false;
         }
         else if(__gameHolding){
             _bird.canJump = false;
@@ -245,6 +245,10 @@ function spawnBird() {
       .gravity("Ground")
       .gravityConst(0)
       .onHit("Ground", function(o){
+        /* We do this because otherwise this event will be called again and again */
+        if(__gameEnded)
+            return;
+        Crafty.audio.play('pipe-hit', 1, 1);
         this.vrotation = 0;
         this.velocity().x = 0;
         haltGame();
@@ -355,6 +359,7 @@ function haltGame(){
 
     __gameEnded = true;
     stopBackground();
+    stopPipeProduction();
     showGameOver();
     showReplay();
 }
@@ -390,14 +395,15 @@ function showGameOver(){
 }
 
 function showReplay(){
-    _replayButton = Crafty.e("2D, DOM, Image")
+    _replayButton = Crafty.e("btnReploy, 2D, DOM, Image, Mouse")
         .attr({ x: 110, y: 360, z: 10 })
         .image("img/replay.png")
-        .bind("KeyDown", function(event){
-            if(event.keyCode === Crafty.keys.SPACE){
+        .css('cursor', 'pointer')
+        .bind("Click", function(event){
+            //if(event.keyCode === Crafty.keys.SPACE){
                 /* We know that this is a game restart so... */
                 restartGame();
-            }
+            //}
         });
 }
 
@@ -496,5 +502,14 @@ Crafty.bind('KeyDown', function(event) {
         else{
             startBackground();
         }
+    }
+
+    /* Restart the game */
+    if(event.keyCode === Crafty.keys.SPACE){
+        if(!__gameEnded)
+            return;
+
+        /* The game has ended - restart it! */
+        restartGame();
     }
 });
