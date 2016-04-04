@@ -82,8 +82,8 @@ Crafty.defineScene("square", function(attributes) {
     createGroundLayer(1008);
     createSkyLayer(0);
     createSkyLayer(1104);
-    createCeilingLayer(0);
-    createCeilingLayer(928);
+    //createCeilingLayer(0);
+    //createCeilingLayer(928);
     fetchHiScore();
 
     /*Add player*/
@@ -150,10 +150,10 @@ function checkBackground(){
         skyLayers[currentSkyLayer].x = skyLayers[currentSkyLayer == 0 ? 1 : 0].x + 1104;
         currentSkyLayer = currentSkyLayer == 0 ? 1 : 0 ;
     }
-    if(ceilingLayers[currentCeilingLayer].x < -864){
-        ceilingLayers[currentCeilingLayer].x = ceilingLayers[currentCeilingLayer == 0 ? 1 : 0].x + 864;
-        currentCeilingLayer = currentCeilingLayer == 0 ? 1 : 0 ;
-    }
+    // if(ceilingLayers[currentCeilingLayer].x < -864){
+    //     ceilingLayers[currentCeilingLayer].x = ceilingLayers[currentCeilingLayer == 0 ? 1 : 0].x + 864;
+    //     currentCeilingLayer = currentCeilingLayer == 0 ? 1 : 0 ;
+    // }
 }
 
 function createGroundLayer(offset){
@@ -234,6 +234,10 @@ function spawnBird() {
         if(_bird._rotation >= 90)
             _bird.rotation = 90;
         _bird.vrotation = 60;
+
+        /* Prevent bird moving past top of screen */
+        if(_bird.y < 8)
+            _bird.y = 8;
       })
       .bind("reset-bird", function(){
         this.attr({x: 100, y: 300, z: 10 })
