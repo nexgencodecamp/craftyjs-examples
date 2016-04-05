@@ -25,6 +25,7 @@ var _splash, _gameOverBoard, _replayButton, _medal;
 var _vxBackground = -100;
 var _vxSky = -40;
 var _bird;
+var _hundredsSprite, _tensSprite, _unitsSprite;
 
 var _medals = {
     BRONZE: 0,
@@ -176,6 +177,14 @@ function fetchHiScore(){
 }
 
 function createHiScore(hiScore){
+    /* Delete previous hiscore if the images exist */
+    if(_hundredsSprite)
+        _hundredsSprite.destroy();
+    if(_tensSprite)
+        _tensSprite.destroy();
+    if(_unitsSprite)
+        _unitsSprite.destroy();
+
     var result;
     if(!hiScore){
         result = 0;
@@ -431,6 +440,9 @@ function restartGame(){
     /* Set splash screen */
     setSplash();
 
+    /* Reset Hi-Score */
+    createHiScore(fetchHiScore());
+
     /* Start the background */
     startBackground();
 }
@@ -451,7 +463,7 @@ function updateScoreOnGameBoard(){
 }
 
 function updateHiScoreOnGameBoard(hs){
-    var hundreds, tens, units, hundredsSprite, tensSprite, unitSprite;
+    var hundreds, tens, units;
     hundreds = Math.floor(hs / 100);
     tens = (Math.floor(hs / 10) % 10);
     units = hs % 10;
@@ -460,11 +472,11 @@ function updateHiScoreOnGameBoard(hs){
         return;
 
     if(hundreds > 0)
-        hundredsSprite = Crafty.e("Hundred, 2D, DOM, Image").attr({x: 10, y: 6}).image("img/font_big_"+hundreds+".png");
+        _hundredsSprite = Crafty.e("Hundred, 2D, DOM, Image").attr({x: 10, y: 6}).image("img/font_big_"+hundreds+".png");
     if(hundreds > 0 || (hundreds === 0 && tens > 0))
-        tensSprite = Crafty.e("Ten, 2D, DOM, Image").attr({x: 35, y: 6}).image("img/font_big_"+tens+".png");
+        _tensSprite = Crafty.e("Ten, 2D, DOM, Image").attr({x: 35, y: 6}).image("img/font_big_"+tens+".png");
 
-    unitSprite = Crafty.e("Unit, 2D, DOM, Image").attr({x: 60, y: 6}).image("img/font_big_"+units+".png");
+    _unitsSprite = Crafty.e("Unit, 2D, DOM, Image").attr({x: 60, y: 6}).image("img/font_big_"+units+".png");
 }
 
 function updateScore(delta){
