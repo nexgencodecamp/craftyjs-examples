@@ -52,26 +52,33 @@ Crafty.scene('Publisher', function() {
 });
 
 Crafty.defineScene("loading", function() {
+    Crafty.background("#7e8dd5");
     Crafty.e("2D, DOM, Text")
-          .attr({ w: 100, h: 20, x: 150, y: 120 })
-          .text("Loading")
+          .attr({ w: 100, h: 20, x: 350, y: 500 })
+          .text("Loading...")
           .css({ "text-align": "center"})
-          .textColor("#FFFFFF");
+          .textColor("#3f62a1")
+          .textFont({ size: '12px', weight: 'bold', family: 'Courier New' })
 });
 
 function load_scene(scene, duration) {
     Crafty.e("2D, Canvas, Tween, Color")
-        .attr({alpha:0.0, x:0, y:0, w:800, h:600})
+        .attr({alpha:1.0, x:0, y:0, w:800, h:600})
         .tween({alpha: 1.0}, duration)
         .bind("TweenEnd", function() {
             Crafty.scene(scene);
             Crafty.e("2D, Canvas, Tween, Color")
                  .attr({alpha:1.0, x:0, y:0, w:800, h:600})
                  .color("#000")
-                 .tween({alpha: 0.0}, 4000)
+                 .tween({alpha: 0.0}, 3000)
                  .bind("TweenEnd", function(){
-                    Crafty.e("2D, Canvas, Image").image("img/background.png");
-                    Crafty.scene("square");
+                    Crafty.enterScene("loading");
+                    Crafty.e("2D, Canvas, Image,Tween, Color").image("img/ppSplashB.png")
+                        .attr({alpha:0, x:0, y:0, w:800, h:600})
+                        .tween({alpha: 1.0}, 4000)
+                        .bind("TweenEnd", function(){
+                            Crafty.enterScene("square");
+                        });
                  });
         });
 }
