@@ -291,8 +291,8 @@ function createPipes(){
 
     /* Create upper pipe */
     _upperPipe = Crafty.e("PipeU, 2D, DOM, Image, Motion, Solid")
-        .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe - 26, z: 2, w: 52, h: 26})
-        .image("img/pipe-up.png")
+        .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe - 26, z: 2, w: 52, h: 53})
+        .image("img/iceUp.png")
         .bind("EnterFrame", function(){
             /* Check if the pipe is offscreen and destroy it */
             if(this.x < -52)
@@ -315,7 +315,7 @@ function createPipes(){
     /* Create pipe in between */
     _upperPipeColumn = Crafty.e("PipeUC, 2D, DOM, Image, Motion, Solid")
         .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe, z: 2, w: 52, h: heightOfUpperPipe})
-        .image("img/pipe.png", "repeat-y")
+        .image("img/ice.png", "repeat-y")
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
@@ -330,8 +330,8 @@ function createPipes(){
 
     /* Create lower pipe */
     _lowerPipe = Crafty.e("PipeL, 2D, DOM, Image, Motion, Solid")
-        .attr({x: pipeX, y: _upperPipe.y - 150, z: 2, w: 52, h: 26})
-        .image("img/pipe-down.png")
+        .attr({x: pipeX, y: _upperPipe.y - 150, z: 2, w: 52, h: 53})
+        .image("img/icedown.png")
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
@@ -347,7 +347,7 @@ function createPipes(){
     /* Create pipe in between */
     _lowerPipeColumn = Crafty.e("PipeLC, 2D, DOM, Image, Motion, Solid")
         .attr({x: pipeX, y: lowerPipeY, z: 2, w: 52, h: _lowerPipe.y - 100})
-        .image("img/pipe.png", "repeat-y")
+        .image("img/ice.png", "repeat-y")
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
