@@ -205,7 +205,7 @@ function createHiScore(hiScore){
 function spawnBird() {
     _bird = Crafty.e('2D, DOM, bird_start, AngularMotion, SpriteAnimation, Jumper, Gravity, Collision, Solid')
       .attr({x: 100, y: 300, z: 10 })
-      .reel("fly", 250, [[0, 0], [1, 0], [1, 0], [1, 0]])
+      .reel("fly", 500, [[0, 0], [1, 0], [2, 0], [3, 0]])
       .animate("fly", -1)
       .jumper(100, ['SPACE'])
       .bind("CheckJumping", function(ground){
