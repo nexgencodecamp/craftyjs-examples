@@ -154,14 +154,14 @@ function checkBackground(){
 
 function createGroundLayer(offset){
     var ground = Crafty.e("Ground, 2D, DOM, Image, Motion")
-        .attr({x: offset, y: 488, z: 0, w: 1008, h: 112})
-        .image("img/ground.png", "repeat-x");
+        .attr({x: offset, y: 488, z: 9, w: 1008, h: 112})
+        .image("img/groundCave.png", "repeat-x");
     groundLayers.push(ground);
 }
 
 function createSkyLayer(offset){
     var sky = Crafty.e("2D, DOM, Image, Motion")
-        .attr({x: offset, y: 175, z: 0, w: 1104, h: 316})
+        .attr({x: offset, y: 205, z: 0, w: 1104, h: 316})
         .image("img/sky404.png", "repeat-x");
     skyLayers.push(sky);
 }
@@ -169,7 +169,7 @@ function createSkyLayer(offset){
 function createCeilingLayer(offset){
     var ceiling = Crafty.e("2D, DOM, Image, Motion, Solid")
         .attr({x: offset, y: 40, z: 0, w: 928, h: 16})
-        .image("img/ceiling.png", "repeat-x");
+        .image("img/ceilingCave.png", "repeat-x");
 }
 
 function fetchHiScore(){
@@ -280,14 +280,14 @@ function spawnBird() {
 
 function createPipes(){
     var pipeX = 850;
-    var upperPipeY = 488
+    var upperPipeY = 520
     var lowerPipeY = 100;
 
     if(__gamePaused || __gameEnded || __gameHolding || _bird.wasHit)
         return;
 
-    var heightOfUpperPipe = Math.floor(Math.random() * 100) + 30;
-    var heightOfLowerPipe = Math.floor(Math.random() * 100) + 30;
+    var heightOfUpperPipe = Math.floor(Math.random() * 100) + 40;
+    var heightOfLowerPipe = Math.floor(Math.random() * 100) + 40;
 
     /* Create upper pipe */
     _upperPipe = Crafty.e("PipeU, 2D, DOM, Image, Motion, Solid")
@@ -315,7 +315,7 @@ function createPipes(){
     /* Create pipe in between */
     _upperPipeColumn = Crafty.e("PipeUC, 2D, DOM, Image, Motion, Solid")
         .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe, z: 2, w: 52, h: heightOfUpperPipe})
-        .image("img/ice.png", "repeat-y")
+        .image("img/column.png", "repeat-y")
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
@@ -347,7 +347,7 @@ function createPipes(){
     /* Create pipe in between */
     _lowerPipeColumn = Crafty.e("PipeLC, 2D, DOM, Image, Motion, Solid")
         .attr({x: pipeX, y: lowerPipeY, z: 2, w: 52, h: _lowerPipe.y - 100})
-        .image("img/ice.png", "repeat-y")
+        .image("img/column.png", "repeat-y")
         .bind("EnterFrame", function(){
             if(this.x < -52)
                 this.destroy();
