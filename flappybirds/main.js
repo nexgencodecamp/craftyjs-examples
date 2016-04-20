@@ -16,6 +16,7 @@ var __hiScore;
 var __HI_SCORE_KEY__ = 'nexgen::flappybirds::hiscore';
 
 var groundLayers = [];
+var ceilingLayers = [];
 var skyLayers = [];
 var currentGroundLayer = 0;
 var currentSkyLayer = 0;
@@ -90,6 +91,8 @@ Crafty.defineScene("square", function(attributes) {
     createGroundLayer(1008);
     createSkyLayer(0);
     createSkyLayer(1104);
+    createCeilingLayer(0)
+    createCeilingLayer(1008);
     createHiScore(fetchHiScore());
 
     /*Add player*/
@@ -120,6 +123,9 @@ function startBackground(){
     for(var j=0; j < skyLayers.length; j++){
         skyLayers[j].velocity().x = _vxSky;
     }
+    for(var i=0; i < ceilingLayers.length; i++){
+        ceilingLayers[i].velocity().x = _vxBackground;
+    }
 }
 
 function stopBackground(){
@@ -128,6 +134,9 @@ function stopBackground(){
     }
     for(var j=0; j < skyLayers.length; j++){
         skyLayers[j].velocity().x = 0;
+    }
+    for(var i=0; i < ceilingLayers.length; i++){
+        ceilingLayers[i].velocity().x = 0;
     }
 }
 
@@ -150,6 +159,12 @@ function checkBackground(){
         skyLayers[currentSkyLayer].x = skyLayers[currentSkyLayer == 0 ? 1 : 0].x + 1104;
         currentSkyLayer = currentSkyLayer == 0 ? 1 : 0 ;
     }
+    if(ceilingLayers[currentCeilingLayer].x < -1008){
+        /* Move the layer */
+        ceilingLayers[currentCeilingLayer].x = ceilingLayers[currentCeilingLayer == 0 ? 1 : 0].x + 1008;
+        /* Change the current layer */
+        currentCeilingLayer = currentCeilingLayer == 0 ? 1 : 0 ;
+    }
 }
 
 function createGroundLayer(offset){
@@ -168,8 +183,9 @@ function createSkyLayer(offset){
 
 function createCeilingLayer(offset){
     var ceiling = Crafty.e("2D, DOM, Image, Motion, Solid")
-        .attr({x: offset, y: 40, z: 0, w: 928, h: 16})
+        .attr({x: offset, y: 0, z: 9, w: 1008, h: 124})
         .image("img/ceilingCave.png", "repeat-x");
+    ceilingLayers.push(ceiling);
 }
 
 function fetchHiScore(){
@@ -252,6 +268,7 @@ function spawnBird() {
       })
       .gravity("Ground")
       .gravityConst(0)
+      .collision(new Crafty.polygon([9,9,  25,9,  25,25,  9,25]))
       .onHit("Ground", function(o){
         /* We do this because otherwise this event will be called again and again */
         if(__gameEnded)
@@ -290,12 +307,13 @@ function createPipes(){
     var heightOfLowerPipe = Math.floor(Math.random() * 100) + 40;
 
     /* Create upper pipe */
-    _upperPipe = Crafty.e("PipeU, 2D, DOM, Image, Motion, Solid")
-        .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe - 26, z: 2, w: 52, h: 53})
-        .image("img/iceUp.png")
+    _upperPipe = Crafty.e("PipeU, 2D, DOM, Image, Motion, Solid, Collision")
+        .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe - 67, z: 2, w: 98, h: 67})
+        .image("img/column_up1.png")
+        .collision(new Crafty.polygon([20,10,  50,5,  75,25,  97,75,  0,75]))
         .bind("EnterFrame", function(){
             /* Check if the pipe is offscreen and destroy it */
-            if(this.x < -52)
+            if(this.x < -100)
                 this.destroy();
             /* Check if the bird has caught up with this pipe */
             if(this.x <= 100 && this.pipePassed === undefined){
@@ -314,10 +332,10 @@ function createPipes(){
 
     /* Create pipe in between */
     _upperPipeColumn = Crafty.e("PipeUC, 2D, DOM, Image, Motion, Solid")
-        .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe, z: 2, w: 52, h: heightOfUpperPipe})
-        .image("img/column.png", "repeat-y")
+        .attr({x: pipeX, y: upperPipeY - heightOfUpperPipe, z: 0, w: 98, h: heightOfUpperPipe})
+        .image("img/column1.png", "repeat-y")
         .bind("EnterFrame", function(){
-            if(this.x < -52)
+            if(this.x < -100)
                 this.destroy();
         })
         .bind('halt-pipe', function(){
@@ -329,11 +347,12 @@ function createPipes(){
         _upperPipeColumn.velocity().x = _vxBackground;
 
     /* Create lower pipe */
-    _lowerPipe = Crafty.e("PipeL, 2D, DOM, Image, Motion, Solid")
-        .attr({x: pipeX, y: _upperPipe.y - 150, z: 2, w: 52, h: 53})
-        .image("img/icedown.png")
+    _lowerPipe = Crafty.e("PipeL, 2D, DOM, Image, Motion, Solid, Collision")
+        .attr({x: pipeX, y: _upperPipe.y - 175, z: 2, w: 98, h: 67})
+        .image("img/column_down1.png")
+        .collision(new Crafty.polygon([0,0,  97,0,  78,58,  50,65,  30,52]))
         .bind("EnterFrame", function(){
-            if(this.x < -52)
+            if(this.x < -100)
                 this.destroy();
         })
         .bind('halt-pipe', function(){
@@ -346,10 +365,10 @@ function createPipes(){
 
     /* Create pipe in between */
     _lowerPipeColumn = Crafty.e("PipeLC, 2D, DOM, Image, Motion, Solid")
-        .attr({x: pipeX, y: lowerPipeY, z: 2, w: 52, h: _lowerPipe.y - 100})
-        .image("img/column.png", "repeat-y")
+        .attr({x: pipeX, y: lowerPipeY, z: 0, w: 98, h: _lowerPipe.y - 100})
+        .image("img/column1.png", "repeat-y")
         .bind("EnterFrame", function(){
-            if(this.x < -52)
+            if(this.x < -100)
                 this.destroy();
         })
         .bind('halt-pipe', function(){
@@ -402,7 +421,6 @@ function showGameOver(){
             .image("img/medal_"+medal+".png");
 
     }
-
     updateScoreOnGameBoard();
 }
 
@@ -464,9 +482,9 @@ function updateScoreOnGameBoard(){
         __scoreUnitsImageSmall.destroy();
 
     if(tens)
-        __scoreTensImageSmall = Crafty.e("2D, DOM, Image").attr({x: 230, y: 256, z: 10}).image("img/font_small_"+ tens +".png");
+        __scoreTensImageSmall = Crafty.e("2D, DOM, Image").attr({x: 230, y: 256, z: 20}).image("img/font_small_"+ tens +".png");
     if(units >= 0)
-        __scoreUnitsImageSmall = Crafty.e("2D, DOM, Image").attr({x: 246, y: 256, z: 10}).image("img/font_small_"+ units +".png");
+        __scoreUnitsImageSmall = Crafty.e("2D, DOM, Image").attr({x: 246, y: 256, z: 20}).image("img/font_small_"+ units +".png");
 }
 
 function updateHiScoreOnGameBoard(hs){
@@ -479,11 +497,11 @@ function updateHiScoreOnGameBoard(hs){
         return;
 
     if(hundreds > 0)
-        _hundredsSprite = Crafty.e("Hundred, 2D, DOM, Image").attr({x: 10, y: 6}).image("img/font_big_"+hundreds+".png");
+        _hundredsSprite = Crafty.e("Hundred, 2D, DOM, Image").attr({x: 10, y: 6, z: 20 }).image("img/font_big_"+hundreds+".png");
     if(hundreds > 0 || (hundreds === 0 && tens > 0))
-        _tensSprite = Crafty.e("Ten, 2D, DOM, Image").attr({x: 35, y: 6}).image("img/font_big_"+tens+".png");
+        _tensSprite = Crafty.e("Ten, 2D, DOM, Image").attr({x: 35, y: 6, z: 20 }).image("img/font_big_"+tens+".png");
 
-    _unitsSprite = Crafty.e("Unit, 2D, DOM, Image").attr({x: 60, y: 6}).image("img/font_big_"+units+".png");
+    _unitsSprite = Crafty.e("Unit, 2D, DOM, Image").attr({x: 60, y: 6, z: 20 }).image("img/font_big_"+units+".png");
 }
 
 function updateScore(delta){
@@ -498,9 +516,9 @@ function updateScore(delta){
     var units = updateUnits();
 
     if(tens)
-        __scoreTensImage = Crafty.e("2D, Canvas, Image").attr({x: 742, y: 6}).image("img/font_big_"+ tens +".png");
+        __scoreTensImage = Crafty.e("2D, DOM, Image").attr({ x: 742, y: 6, z: 20 }).image("img/font_big_"+ tens +".png");
     if(units >= 0)
-        __scoreUnitsImage = Crafty.e("2D, Canvas, Image").attr({x: 770, y: 6}).image("img/font_big_"+ units +".png");
+        __scoreUnitsImage = Crafty.e("2D, DOM, Image").attr({ x: 770, y: 6, z: 20 }).image("img/font_big_"+ units +".png");
 };
 
 function updateTens(){
